@@ -1,4 +1,5 @@
-<img width="680" height="574" alt="Screenshot 2026-10-30 112909" src="https://github.com/user-attachments/assets/9ae817b0-763f-498b-b7ea-28bdee6ee5e1" />
+<img width="602" height="573" alt="Screenshot 2026-10-30 161557" src="https://github.com/user-attachments/assets/e262936c-6fb1-43f2-9097-f04920766095" />
+
 
 # Bluesky Backup & Media Downloader (car-parser)
 
@@ -17,11 +18,10 @@ Ein natives Windows-GUI-Tool in Go zur Sicherung, Dekodierung und Aufbereitung v
 2. Wähle deine heruntergeladene `.car`-Datei aus.
 3. Gib dein **User-Handle** (z. B. `deinname.bsky.social`) ein. Für Handles unter `bsky.social` und `eurosky.social` wird der PDS-Server automatisch erkannt. Bei eigenen Handle-Domains oder einer DID trägst du den PDS-Server im Feld **PDS-Server** manuell ein.
 4. Für den DM-Export erstellst du in Bluesky unter **Einstellungen → Datenschutz und Sicherheit → App-Passwörter** ein App-Passwort. Dieses wird nicht gespeichert und nur für den Abruf verwendet.
-5. Wähle einen **Zielordner** und klicke auf **1. CAR-Backup & Medien herunterladen**.
+5. Wähle einen **Zielordner** und klicke auf **CAR-Backup & Medien herunterladen**.
 6. Klicke anschließend im unteren Bereich auf die Export-Buttons. Posts lassen sich als übersichtliche `.html` (mit Bild-Links) oder `.txt` speichern. **Chats / DMs** werden direkt von Bluesky geladen und als `chats_lesbar.html` im Zielordner abgelegt. Die Datei enthält eine Übersicht mit Nachrichtenzahl und letzter Aktivität; ein Klick auf einen Chatpartner öffnet den zugehörigen Chatverlauf.
 
 ## Features
-- **Nativer Dateidialog:** Nutzt Windows-Shell-Dialoge ohne Konsolenfenster oder UI-Freezes.
 - **Vollständiges Parsing:** Verarbeitet `.car`-Archive lokal (Posts, Follows, Blocks, Likes).
 - **Medien-Download:** Lädt eingebettete Bilder über die AT-Protocol-API herunter und benennt sie chronologisch.
 - **Chat-Export:** Lädt DMs nach Anmeldung mit einem App-Passwort direkt von Bluesky und speichert sie gesammelt in einer nach Chatpartner sortierten HTML-Datei mit klickbarer Übersicht und einklappbaren Verläufen.
