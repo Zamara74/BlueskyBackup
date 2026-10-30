@@ -1,0 +1,17 @@
+# Kompilierte Binärdateien
+*.exe
+*.exe.manifest
+*.dll
+
+# Lokale Testdaten & Ausgaben aus Entwicklungstests
+output/
+Medien/
+*.car
+*.json
+*.txt
+*.html
+
+# IDE- und Betriebssystem-Dateien
+.idea/
+.vscode/
+Thumbs.db

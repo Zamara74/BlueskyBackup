@@ -1,0 +1,177 @@
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+
+	bsky "github.com/bluesky-social/indigo/api/bsky"
+	"github.com/ipld/go-car/v2"
+	"github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime/codec/dagcbor"
+	"github.com/ipld/go-ipld-prime/node/basicnode"
+)
+
+type OutputRecord struct {
+	Cid  string      `json:"cid"`
+	Type string      `json:"type"`
+	Data interface{} `json:"data"`
+}
+
+// Wandelt eine IPLD CBOR-Node rekursiv in eine native Go-Map/Slice um
+func nodeToInterface(n interface{}) interface{} {
+	node, ok := n.(ipld.Node)
+	if !ok || node == nil {
+		return n
+	}
+	switch node.Kind() {
+	case ipld.Kind_Map:
+		m := make(map[string]interface{})
+		itr := node.MapIterator()
+		for !itr.Done() {
+			k, v, _ := itr.Next()
+			kStr, _ := k.AsString()
+			m[kStr] = nodeToInterface(v)
+		}
+		return m
+	case ipld.Kind_List:
+		var list []interface{}
+		itr := node.ListIterator()
+		for !itr.Done() {
+			_, v, _ := itr.Next()
+			list = append(list, nodeToInterface(v))
+		}
+		return list
+	case ipld.Kind_String:
+		s, _ := node.AsString()
+		return s
+	case ipld.Kind_Bool:
+		b, _ := node.AsBool()
+		return b
+	case ipld.Kind_Int:
+		i, _ := node.AsInt()
+		return i
+	case ipld.Kind_Float:
+		f, _ := node.AsFloat()
+		return f
+	case ipld.Kind_Bytes:
+		b, _ := node.AsBytes()
+		return b
+	case ipld.Kind_Link:
+		link, _ := node.AsLink()
+		if link != nil {
+			return map[string]interface{}{
+				"$link": link.String(),
+			}
+		}
+		return nil
+	default:
+		return nil
+	}
+}
+
+func main() {
+	carPath := "repo.car"
+	if len(os.Args) > 1 {
+		carPath = os.Args[1]
+	}
+
+	outputDir := "output"
+	_ = os.MkdirAll(outputDir, 0755)
+
+	f, err := os.Open(carPath)
+	if err != nil {
+		fmt.Printf("Fehler beim Oeffnen: %v\n", err)
+		return
+	}
+	defer f.Close()
+
+	reader, err := car.NewBlockReader(f)
+	if err != nil {
+		fmt.Printf("Fehler beim Lesen: %v\n", err)
+		return
+	}
+
+	recordsByType := make(map[string][]OutputRecord)
+	seenCids := make(map[string]bool)
+
+	for {
+		block, err := reader.Next()
+		if err != nil {
+			break
+		}
+
+		blockCid := block.Cid().String()
+		if seenCids[blockCid] {
+			continue
+		}
+
+		nb := basicnode.Prototype.Any.NewBuilder()
+		if err := dagcbor.Decode(nb, bytes.NewReader(block.RawData())); err != nil {
+			continue
+		}
+		node := nb.Build()
+
+		typeField, err := node.LookupByString("$type")
+		if err != nil {
+			continue
+		}
+		typeStr, err := typeField.AsString()
+		if err != nil || typeStr == "" {
+			continue
+		}
+
+		seenCids[blockCid] = true
+
+		var recData interface{}
+
+		// 1. Spezialfall: Posts ueber Indigo parsen (fuer vollstaendige Embeds/Blobs)
+		if typeStr == "app.bsky.feed.post" {
+			var post bsky.FeedPost
+			if errCBOR := post.UnmarshalCBOR(bytes.NewReader(block.RawData())); errCBOR == nil {
+				recData = &post
+			}
+		}
+
+		// 2. Alle anderen Typen: IPLD CBOR-Node in Go-Interface konvertieren
+		if recData == nil {
+			recData = nodeToInterface(node)
+		}
+
+		recordsByType[typeStr] = append(recordsByType[typeStr], OutputRecord{
+			Cid:  blockCid,
+			Type: typeStr,
+			Data: recData,
+		})
+	}
+
+	for typeStr, records := range recordsByType {
+		if typeStr == "app.bsky.feed.post" {
+			sort.Slice(records, func(i, j int) bool {
+				p1, ok1 := records[i].Data.(*bsky.FeedPost)
+				p2, ok2 := records[j].Data.(*bsky.FeedPost)
+				if ok1 && ok2 {
+					return p1.CreatedAt < p2.CreatedAt
+				}
+				return false
+			})
+		}
+
+		safeTypeName := strings.ReplaceAll(typeStr, ".", "_")
+		filePath := filepath.Join(outputDir, fmt.Sprintf("output_%s.json", safeTypeName))
+
+		jsonBytes, err := json.MarshalIndent(records, "", "  ")
+		if err != nil {
+			continue
+		}
+
+		_ = os.WriteFile(filePath, jsonBytes, 0644)
+		fmt.Printf("Exportiert: %-45s (%d Eintraege)\n", filePath, len(records))
+	}
+
+	fmt.Println("\nFertig! Alle Dateien wurden im 'output'-Ordner gespeichert.")
+}
