@@ -21,7 +21,6 @@ Ein natives Windows-GUI-Tool in Go zur Sicherung, Dekodierung und Aufbereitung v
 6. Klicke anschließend im unteren Bereich auf die Export-Buttons. Posts lassen sich als übersichtliche `.html` (mit Bild-Links) oder `.txt` speichern. **Chats / DMs** werden direkt von Bluesky geladen und als `chats_lesbar.html` im Zielordner abgelegt. Die Datei enthält eine Übersicht mit Nachrichtenzahl und letzter Aktivität; ein Klick auf einen Chatpartner öffnet den zugehörigen Chatverlauf.
 
 ## Features
-- **Nativer Dateidialog:** Nutzt Windows-Shell-Dialoge ohne Konsolenfenster oder UI-Freezes.
 - **Vollständiges Parsing:** Verarbeitet `.car`-Archive lokal (Posts, Follows, Blocks, Likes).
 - **Medien-Download:** Lädt eingebettete Bilder über die AT-Protocol-API herunter und benennt sie chronologisch.
 - **Chat-Export:** Lädt DMs nach Anmeldung mit einem App-Passwort direkt von Bluesky und speichert sie gesammelt in einer nach Chatpartner sortierten HTML-Datei mit klickbarer Übersicht und einklappbaren Verläufen.
