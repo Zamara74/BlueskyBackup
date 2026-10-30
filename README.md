@@ -1,5 +1,7 @@
 # Bluesky Backup & Media Downloader (car-parser)
 
+**Autor:** [Zamara74](https://github.com/Zamara74)
+
 Ein natives Windows-GUI-Tool in Go zur Sicherung, Dekodierung und Aufbereitung von Bluesky `.car`-Archiven inklusive automatischer Medien-Downloads und verlinkter HTML-/TXT-Exports.
 
 ## 🚀 Anleitung & Nutzung

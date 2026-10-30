@@ -15,6 +15,7 @@ func main() {
 	myApp := app.New()
 	myWindow := myApp.NewWindow("Bluesky Backup & Media Downloader")
 	myWindow.Resize(fyne.NewSize(680, 620))
+	creditsLabel := widget.NewLabelWithStyle("v1.0.0 by Zamara74", fyne.TextAlignTrailing, fyne.TextStyle{Italic: true})
 
 	carPathEntry := widget.NewEntry()
 	carPathEntry.SetPlaceHolder("Pfad zur .car-Datei...")
@@ -43,9 +44,22 @@ func main() {
 			}
 		}()
 	})
+	
+	// 1. Button zuerst mit Standard-Text und HighImportance erstellen
+	btnStart := widget.NewButton("1. CAR-Datei verarbeiten & Medien herunterladen", func() {
+		// Hier kommt deine bisherige Start-Funktion/Logik rein
+	})
+	btnStart.Importance = widget.HighImportance
 
-	chkDownloadMedia := widget.NewCheck("Bilder herunterladen", nil)
-	chkDownloadMedia.SetChecked(true)
+	// 2. Eine EINZIGE Checkbox erstellen, die Text-Wechsel UND Haken steuert
+	chkDownloadMedia := widget.NewCheck("Bilder herunterladen", func(checked bool) {
+		if checked {
+			btnStart.SetText("1. CAR-Datei verarbeiten & Medien herunterladen")
+		} else {
+			btnStart.SetText("1. CAR-Datei verarbeiten")
+		}
+	})
+	chkDownloadMedia.SetChecked(true) // Standardmäßig aktiviert
 
 	progressBar := widget.NewProgressBar()
 	progressBar.SetValue(0)
@@ -53,8 +67,7 @@ func main() {
 	statusLabel := widget.NewLabel("Bereit.")
 	statusLabel.Wrapping = fyne.TextWrapWord
 
-	btnStart := widget.NewButton("1. CAR-Backup & Medien herunterladen", nil)
-	btnStart.Importance = widget.HighImportance
+
 
 	// --- BEREINIGEN-BEREICH ---
 	chkPosts := widget.NewCheck("Posts", nil)
@@ -251,6 +264,10 @@ func main() {
 		chkLikes, btnCleanLikes,
 	)
 
+	// Statusleiste: Links Status, Rechts Credits
+	bottomBar := container.NewBorder(nil, nil, nil, creditsLabel, statusLabel)
+
+	// Gesamter Inhalt in einer vertikalen Box
 	content := container.NewVBox(
 		form,
 		widget.NewSeparator(),
@@ -260,8 +277,14 @@ func main() {
 		cleanGrid,
 		widget.NewSeparator(),
 		progressBar,
-		statusLabel,
+		bottomBar,
 	)
+
+	// Padded-Container sorgt für einen gleichmäßigen Innenabstand zum Fensterrahmen
+	myWindow.SetContent(container.NewPadded(content))
+	
+	// Fenstergröße automatisch an den Inhalt anpassen (verhindert das unnötige Aufblähen)
+	myWindow.Resize(fyne.NewSize(600, 0))
 
 	myWindow.SetContent(container.NewPadded(content))
 	myWindow.ShowAndRun()
