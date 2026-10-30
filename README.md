@@ -1,4 +1,5 @@
-<img width="680" height="574" alt="Screenshot 2026-10-30 112909" src="https://github.com/user-attachments/assets/9ae817b0-763f-498b-b7ea-28bdee6ee5e1" />
+<img width="602" height="573" alt="Screenshot 2026-10-30 161557" src="https://github.com/user-attachments/assets/e262936c-6fb1-43f2-9097-f04920766095" />
+
 
 # Bluesky Backup & Media Downloader (car-parser)
 
