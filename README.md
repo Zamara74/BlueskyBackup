@@ -31,13 +31,17 @@ Ein natives Windows-GUI-Tool in Go zur Sicherung, Dekodierung und Aufbereitung v
   - Chronologische Sortierung (neueste Einträge oben, älteste unten mit `#1`).
 
 ## Release-Build für Windows
-Im PowerShell-Terminal im Projektordner:
+Für den Windows-Build werden **Go 1.23.5 oder neuer** sowie **w64devkit** mit dem GCC-C-Compiler benötigt. Fyne verwendet CGO für die native Windows-GUI; deshalb muss `CGO_ENABLED` auf `1` gesetzt sein und `gcc.exe` über `PATH` erreichbar sein.
+
+Installiere w64devkit und passe den folgenden Pfad an den Installationsort an. Die Befehle im PowerShell-Terminal im Projektordner ausführen:
 
 ```powershell
-$env:PATH += ";E:\Programme\w64devkit\bin"
+$env:PATH += ";C:\w64devkit\bin"
 $env:CGO_ENABLED = "1"
 fyne package -os windows -icon icon.png -name BlueskyBackup
 ```
+
+Prüfe bei Build-Fehlern zunächst mit `gcc --version`, ob der Compiler gefunden wird. Die Umgebungsvariablen gelten für das aktuelle PowerShell-Fenster.
 
 Der Befehl verwendet `icon.png` für das EXE-Dateisymbol. Das Fenster-/Taskleisten-Icon wird ebenfalls aus `icon.png` geladen.
 
