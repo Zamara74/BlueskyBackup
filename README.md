@@ -2,6 +2,19 @@
 
 Ein natives Windows-GUI-Tool in Go zur Sicherung, Dekodierung und Aufbereitung von Bluesky `.car`-Archiven inklusive automatischer Medien-Downloads und verlinkter HTML-/TXT-Exports.
 
+## 🚀 Anleitung & Nutzung
+
+### 1. CAR-Datei von Bluesky herunterladen
+1. Öffne **Bluesky** im Browser (Einstellungen -> Konto -> *Konto-Daten exportieren* / *Export Data*).
+2. Lade dein Repository-Archiv (die `.car`-Datei, z. B. `repo.car`) herunter.
+
+### 2. Tool starten & Daten sichern
+1. Starte die `BlueskyBackup.exe`.
+2. Wähle deine heruntergeladene `.car`-Datei aus.
+3. Gib dein **User-Handle** (z. B. `deinname.bsky.social`) ein, damit das Tool deine DID und Medien zuordnen kann.
+4. Wähle einen **Zielordner** und klicke auf **1. CAR-Backup & Medien herunterladen**.
+5. Klicke anschließend im unteren Bereich auf die **Bereinigen-Buttons**, um deine Posts als übersichtliche `.html` (mit Bild-Links) oder `.txt` zu speichern.
+
 ## Features
 - **Nativer Dateidialog:** Nutzt Windows-Shell-Dialoge ohne Konsolenfenster oder UI-Freezes.
 - **Vollständiges Parsing:** Verarbeitet `.car`-Archive lokal (Posts, Follows, Blocks, Likes).
