@@ -17,7 +17,7 @@ Ein natives Windows-GUI-Tool in Go zur Sicherung, Dekodierung und Aufbereitung v
 2. Wähle deine heruntergeladene `.car`-Datei aus.
 3. Gib dein **User-Handle** (z. B. `deinname.bsky.social`) ein. Für Handles unter `bsky.social` und `eurosky.social` wird der PDS-Server automatisch erkannt. Bei eigenen Handle-Domains oder einer DID trägst du den PDS-Server im Feld **PDS-Server** manuell ein.
 4. Für den DM-Export erstellst du in Bluesky unter **Einstellungen → Datenschutz und Sicherheit → App-Passwörter** ein App-Passwort. Dieses wird nicht gespeichert und nur für den Abruf verwendet.
-5. Wähle einen **Zielordner** und klicke auf **1. CAR-Backup & Medien herunterladen**.
+5. Wähle einen **Zielordner** und klicke auf **CAR-Backup & Medien herunterladen**.
 6. Klicke anschließend im unteren Bereich auf die Export-Buttons. Posts lassen sich als übersichtliche `.html` (mit Bild-Links) oder `.txt` speichern. **Chats / DMs** werden direkt von Bluesky geladen und als `chats_lesbar.html` im Zielordner abgelegt. Die Datei enthält eine Übersicht mit Nachrichtenzahl und letzter Aktivität; ein Klick auf einen Chatpartner öffnet den zugehörigen Chatverlauf.
 
 ## Features
@@ -29,17 +29,6 @@ Ein natives Windows-GUI-Tool in Go zur Sicherung, Dekodierung und Aufbereitung v
   - Posts als `.html` mit anklickbaren Bild-Links (im relativen Ordner `Medien/`) oder als reine `.txt`.
   - Auflösung von DIDs zu Handles über `plc.directory` mit In-Memory-Caching (Fallback auf DID bei inaktiven Accounts).
   - Chronologische Sortierung (neueste Einträge oben, älteste unten mit `#1`).
-
-## Release-Build für Windows
-Im PowerShell-Terminal im Projektordner:
-
-```powershell
-$env:PATH += ";E:\Programme\w64devkit\bin"
-$env:CGO_ENABLED = "1"
-fyne package -os windows -icon icon.png -name BlueskyBackup
-```
-
-Der Befehl verwendet `icon.png` für das EXE-Dateisymbol. Das Fenster-/Taskleisten-Icon wird ebenfalls aus `icon.png` geladen.
 
 ## Verwendete Bibliotheken & Open-Source-Dienste
 Dieses Projekt baut auf folgenden Open-Source-Projekten und APIs auf:
