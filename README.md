@@ -1,4 +1,5 @@
-<img width="602" height="573" alt="Screenshot 2026-10-30 161557" src="https://github.com/user-attachments/assets/e262936c-6fb1-43f2-9097-f04920766095" />
+<img width="602" height="573" alt="Screenshot 2026-11-02 081227" src="https://github.com/user-attachments/assets/4e0f73d9-c937-492d-834c-b15f29cae36e" />
+
 
 English | [Deutsch](README.de.md)
 
