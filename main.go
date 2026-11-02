@@ -17,18 +17,19 @@ import (
 var appIcon []byte
 
 func main() {
+	text := textsFor(detectUILanguage())
 	myApp := app.New()
 	myApp.SetIcon(fyne.NewStaticResource("icon.png", appIcon))
-	myWindow := myApp.NewWindow("Bluesky Backup & Media Downloader")
+	myWindow := myApp.NewWindow(text.windowTitle)
 	myWindow.Resize(fyne.NewSize(680, 620))
 	creditsLabel := widget.NewLabelWithStyle("v1.1.0 by Zamara74", fyne.TextAlignTrailing, fyne.TextStyle{Italic: true})
 
 	carPathEntry := widget.NewEntry()
-	carPathEntry.SetPlaceHolder("Pfad zur .car-Datei...")
+	carPathEntry.SetPlaceHolder(text.carPathPlaceholder)
 
-	btnBrowseCar := widget.NewButton("Durchsuchen...", func() {
+	btnBrowseCar := widget.NewButton(text.browseFiles, func() {
 		go func() {
-			if selectedFile, ok := openNativeOpenFileDialog(); ok {
+			if selectedFile, ok := openNativeOpenFileDialog(text.carFileFilter, text.selectCarTitle); ok {
 				fyne.Do(func() {
 					carPathEntry.SetText(selectedFile)
 				})
@@ -37,13 +38,13 @@ func main() {
 	})
 
 	handleEntry := widget.NewEntry()
-	handleEntry.SetPlaceHolder("z.B. username.bsky.social oder did:plc:...")
+	handleEntry.SetPlaceHolder(text.handlePlaceholder)
 
 	chatPasswordEntry := widget.NewPasswordEntry()
-	chatPasswordEntry.SetPlaceHolder("Bluesky-App-Passwort")
+	chatPasswordEntry.SetPlaceHolder(text.appPasswordPlaceholder)
 
 	pdsEntry := widget.NewEntry()
-	pdsEntry.SetPlaceHolder("Wird erkannt oder manuell eingeben")
+	pdsEntry.SetPlaceHolder(text.pdsPlaceholder)
 	pdsAutoDetected := false
 	handleEntry.OnChanged = func(handle string) {
 		if pds, ok := inferPDSFromHandle(handle); ok {
@@ -62,9 +63,9 @@ func main() {
 	outPathEntry := widget.NewEntry()
 	outPathEntry.SetText(".")
 
-	btnBrowseOut := widget.NewButton("Ordner wählen...", func() {
+	btnBrowseOut := widget.NewButton(text.browseFolder, func() {
 		go func() {
-			if selectedFolder, ok := openNativeFolderDialog(); ok {
+			if selectedFolder, ok := openNativeFolderDialog(text.selectFolderDescription); ok {
 				fyne.Do(func() {
 					outPathEntry.SetText(selectedFolder)
 				})
@@ -73,17 +74,17 @@ func main() {
 	})
 
 	// 1. Button zuerst mit Standard-Text und HighImportance erstellen
-	btnStart := widget.NewButton("1. CAR-Datei verarbeiten & Medien herunterladen", func() {
+	btnStart := widget.NewButton(text.startWithMedia, func() {
 		// Hier kommt deine bisherige Start-Funktion/Logik rein
 	})
 	btnStart.Importance = widget.HighImportance
 
 	// 2. Eine EINZIGE Checkbox erstellen, die Text-Wechsel UND Haken steuert
-	chkDownloadMedia := widget.NewCheck("Bilder herunterladen", func(checked bool) {
+	chkDownloadMedia := widget.NewCheck(text.downloadImages, func(checked bool) {
 		if checked {
-			btnStart.SetText("CAR-Datei verarbeiten & Medien herunterladen")
+			btnStart.SetText(text.startWithMedia)
 		} else {
-			btnStart.SetText("CAR-Datei verarbeiten")
+			btnStart.SetText(text.startWithoutMedia)
 		}
 	})
 	chkDownloadMedia.SetChecked(true) // Standardmäßig aktiviert
@@ -91,7 +92,7 @@ func main() {
 	progressBar := widget.NewProgressBar()
 	progressBar.SetValue(0)
 
-	statusLabel := widget.NewLabel("Bereit.")
+	statusLabel := widget.NewLabel(text.statusReady)
 	statusLabel.Wrapping = fyne.TextWrapWord
 	setStatus := func(message string) {
 		fyne.Do(func() {
@@ -100,27 +101,27 @@ func main() {
 	}
 
 	// --- EXPORT-BEREICH ---
-	btnCleanPostsTXT := widget.NewButton("Als TXT...", nil)
-	btnCleanPostsHTML := widget.NewButton("Als HTML...", nil)
+	btnCleanPostsTXT := widget.NewButton(text.exportAsText, nil)
+	btnCleanPostsHTML := widget.NewButton(text.exportAsHTMLFile, nil)
 
-	btnCleanFollows := widget.NewButton("Als TXT...", nil)
-	btnCleanBlocks := widget.NewButton("Als TXT...", nil)
-	btnCleanLikes := widget.NewButton("Als TXT...", nil)
+	btnCleanFollows := widget.NewButton(text.exportAsText, nil)
+	btnCleanBlocks := widget.NewButton(text.exportAsText, nil)
+	btnCleanLikes := widget.NewButton(text.exportAsText, nil)
 
 	// Button für den Online-Chat-Export
 	backupRunning := false
 	var btnCleanChats *widget.Button
-	btnCleanChats = widget.NewButton("HTML (online)...", func() {
+	btnCleanChats = widget.NewButton(text.exportAsHTML, func() {
 		if handleEntry.Text == "" {
-			dialog.ShowInformation("Fehler", "Bitte gib dein Bluesky-Handle ein.", myWindow)
+			dialog.ShowInformation(text.errorTitle, text.missingHandle, myWindow)
 			return
 		}
 		if chatPasswordEntry.Text == "" {
-			dialog.ShowInformation("Fehler", "Bitte gib ein Bluesky-App-Passwort ein.", myWindow)
+			dialog.ShowInformation(text.errorTitle, text.missingPassword, myWindow)
 			return
 		}
 		if pdsEntry.Text == "" {
-			dialog.ShowInformation("PDS-Server erforderlich", "Für dieses Handle kann der PDS-Server nicht automatisch erkannt werden. Bitte gib ihn manuell ein.", myWindow)
+			dialog.ShowInformation(text.pdsRequiredTitle, text.pdsRequiredMessage, myWindow)
 			return
 		}
 
@@ -133,13 +134,13 @@ func main() {
 		}
 		chatPasswordEntry.SetText("")
 		btnCleanChats.Disable()
-		statusLabel.SetText("Melde bei Bluesky an und lade Chats...")
+		statusLabel.SetText(text.loginDownloadingChats)
 
 		go func() {
 			conversations, myDID, err := FetchChatConversations(handle, appPassword, pds)
 			appPassword = ""
 			if err != nil {
-				setStatus(fmt.Sprintf("Fehler beim Chat-Download: %v", err))
+				setStatus(fmt.Sprintf(text.chatDownloadError, err))
 				fyne.Do(func() {
 					if !backupRunning {
 						btnCleanChats.Enable()
@@ -151,7 +152,7 @@ func main() {
 			targetPath := filepath.Join(outDir, "chats_lesbar.html")
 			err = ExportChatsToHTML(conversations, targetPath, myDID)
 			if err != nil {
-				setStatus(fmt.Sprintf("Fehler beim Speichern der Chat-HTML: %v", err))
+				setStatus(fmt.Sprintf(text.chatHTMLSaveError, err))
 				fyne.Do(func() {
 					if !backupRunning {
 						btnCleanChats.Enable()
@@ -160,7 +161,7 @@ func main() {
 				return
 			}
 
-			setStatus(fmt.Sprintf("Chats als HTML gespeichert: %s", targetPath))
+			setStatus(fmt.Sprintf(text.chatsSaved, targetPath))
 			fyne.Do(func() {
 				if !backupRunning {
 					btnCleanChats.Enable()
@@ -194,21 +195,21 @@ func main() {
 	handleExport := func(defaultName string, exportFunc func(string, string) error) {
 		outDir := outPathEntry.Text
 		go func() {
-			setStatus("Öffne Speichern-Dialog...")
-			filter := "Textdateien (*.txt)|*.txt|Alle Dateien (*.*)|*.*"
+			setStatus(text.openSaveDialog)
+			filter := text.textFileFilter
 
-			targetPath, ok := openNativeSaveDialog(defaultName, filter)
+			targetPath, ok := openNativeSaveDialog(defaultName, filter, text.allFilesFilter, text.saveFileTitle)
 			if !ok || targetPath == "" {
-				setStatus("Speichern abgebrochen.")
+				setStatus(text.saveCancelled)
 				return
 			}
 
-			setStatus("Erstelle Textdatei...")
+			setStatus(text.creatingTextFile)
 			err := exportFunc(outDir, targetPath)
 			if err != nil {
-				setStatus(fmt.Sprintf("Fehler: %v", err))
+				setStatus(fmt.Sprintf("%s: %v", text.errorTitle, err))
 			} else {
-				setStatus(fmt.Sprintf("Erfolgreich gespeichert unter: %s", filepath.Base(targetPath)))
+				setStatus(fmt.Sprintf(text.savedSuccessfully, filepath.Base(targetPath)))
 			}
 		}()
 	}
@@ -220,21 +221,21 @@ func main() {
 		isMediaChecked := chkDownloadMedia.Checked
 
 		go func() {
-			setStatus("Öffne Speichern-Dialog für HTML...")
-			filter := "HTML-Dateien (*.html)|*.html|Alle Dateien (*.*)|*.*"
+			setStatus(text.openHTMLSaveDialog)
+			filter := text.htmlFileFilter
 
-			targetPath, ok := openNativeSaveDialog("posts_lesbar.html", filter)
+			targetPath, ok := openNativeSaveDialog("posts_lesbar.html", filter, text.allFilesFilter, text.saveFileTitle)
 			if !ok || targetPath == "" {
-				setStatus("Speichern abgebrochen.")
+				setStatus(text.saveCancelled)
 				return
 			}
 
-			setStatus("Erstelle HTML-Dokument...")
+			setStatus(text.creatingHTML)
 			err := exportPostsAsHTML(outDir, targetPath, isMediaChecked)
 			if err != nil {
-				setStatus(fmt.Sprintf("Fehler: %v", err))
+				setStatus(fmt.Sprintf("%s: %v", text.errorTitle, err))
 			} else {
-				setStatus(fmt.Sprintf("HTML erfolgreich gespeichert unter: %s", filepath.Base(targetPath)))
+				setStatus(fmt.Sprintf(text.htmlSavedSuccessfully, filepath.Base(targetPath)))
 			}
 		}()
 	}
@@ -252,16 +253,16 @@ func main() {
 		downloadMediaChecked := chkDownloadMedia.Checked
 
 		if carPath == "" {
-			dialog.ShowError(fmt.Errorf("Bitte wähle eine .car-Datei aus!"), myWindow)
+			dialog.ShowError(fmt.Errorf("%s", text.missingCAR), myWindow)
 			return
 		}
 
 		if downloadMediaChecked && handleInput == "" {
-			dialog.ShowError(fmt.Errorf("Für den Bilder-Download wird ein Handle oder eine DID benötigt!"), myWindow)
+			dialog.ShowError(fmt.Errorf("%s", text.handleRequiredForMedia), myWindow)
 			return
 		}
 		if downloadMediaChecked && pdsEntry.Text == "" {
-			dialog.ShowError(fmt.Errorf("Der PDS-Server konnte für dieses Handle nicht automatisch erkannt werden. Bitte gib ihn manuell ein."), myWindow)
+			dialog.ShowError(fmt.Errorf("%s", text.pdsNotRecognized), myWindow)
 			return
 		}
 
@@ -271,13 +272,13 @@ func main() {
 		progressBar.SetValue(0)
 
 		go func() {
-			setStatus("Starte CAR-Parsing...")
-			err := parseCarFile(carPath, outDir, func(msg string) {
+			setStatus(text.startingCARParsing)
+			err := parseCarFile(carPath, outDir, text, func(msg string) {
 				setStatus(msg)
 			})
 
 			if err != nil {
-				setStatus(fmt.Sprintf("Fehler beim Parsing: %v", err))
+				setStatus(fmt.Sprintf(text.parsingError, err))
 				fyne.Do(func() {
 					btnStart.Enable()
 				})
@@ -286,10 +287,10 @@ func main() {
 			}
 
 			if downloadMediaChecked {
-				setStatus("Löse Handle/DID auf...")
+				setStatus(text.resolvingHandle)
 				userDid, err := resolveHandleToDID(handleInput, pds)
 				if err != nil {
-					setStatus(fmt.Sprintf("Fehler bei Handle-Auflösung: %v", err))
+					setStatus(fmt.Sprintf(text.handleResolutionError, err))
 					fyne.Do(func() {
 						btnStart.Enable()
 					})
@@ -297,9 +298,9 @@ func main() {
 					return
 				}
 
-				setStatus(fmt.Sprintf("DID gefunden (%s). Starte Medien-Download...", userDid))
+				setStatus(fmt.Sprintf(text.didFoundStartingDownload, userDid))
 
-				err = downloadMedia(outDir, userDid, pds, func(current, total int, msg string) {
+				err = downloadMedia(outDir, userDid, pds, text, func(current, total int, msg string) {
 					setStatus(msg)
 					if total > 0 {
 						value := float64(current) / float64(total)
@@ -310,15 +311,15 @@ func main() {
 				})
 
 				if err != nil {
-					setStatus(fmt.Sprintf("Download-Fehler: %v", err))
+					setStatus(fmt.Sprintf(text.downloadError, err))
 				} else {
-					setStatus("Fertig! Alle JSONs und Medien wurden erfolgreich gespeichert.")
+					setStatus(text.backupComplete)
 				}
 			} else {
 				fyne.Do(func() {
 					progressBar.SetValue(1.0)
 				})
-				setStatus("Fertig! JSON-Dateien wurden erfolgreich exportiert (Bilder übersprungen).")
+				setStatus(text.exportComplete)
 			}
 
 			fyne.Do(func() {
@@ -332,24 +333,24 @@ func main() {
 	outRow := container.NewBorder(nil, nil, nil, btnBrowseOut, outPathEntry)
 
 	form := widget.NewForm(
-		widget.NewFormItem("CAR-Datei:", carRow),
-		widget.NewFormItem("User Handle / DID:", handleEntry),
-		widget.NewFormItem("App-Passwort für DMs:", chatPasswordEntry),
-		widget.NewFormItem("PDS-Server:", pdsEntry),
-		widget.NewFormItem("Zielordner:", outRow),
-		widget.NewFormItem("Optionen:", chkDownloadMedia),
+		widget.NewFormItem(text.carFileLabel, carRow),
+		widget.NewFormItem(text.handleDIDLabel, handleEntry),
+		widget.NewFormItem(text.appPasswordLabel, chatPasswordEntry),
+		widget.NewFormItem(text.pdsLabel, pdsEntry),
+		widget.NewFormItem(text.outputFolderLabel, outRow),
+		widget.NewFormItem(text.optionsLabel, chkDownloadMedia),
 	)
 
 	postsButtons := container.NewHBox(btnCleanPostsTXT, btnCleanPostsHTML)
 
 	leftExportColumn := container.New(layout.NewFormLayout(),
-		widget.NewLabel("Posts"), postsButtons,
-		widget.NewLabel("Follows"), container.NewHBox(btnCleanFollows),
-		widget.NewLabel("Blocks"), container.NewHBox(btnCleanBlocks),
+		widget.NewLabel(text.postsLabel), postsButtons,
+		widget.NewLabel(text.followsLabel), container.NewHBox(btnCleanFollows),
+		widget.NewLabel(text.blocksLabel), container.NewHBox(btnCleanBlocks),
 	)
 	rightExportColumn := container.New(layout.NewFormLayout(),
-		widget.NewLabel("Likes"), container.NewHBox(btnCleanLikes),
-		widget.NewLabel("Chats / DMs"), container.NewHBox(btnCleanChats),
+		widget.NewLabel(text.likesLabel), container.NewHBox(btnCleanLikes),
+		widget.NewLabel(text.chatsLabel), container.NewHBox(btnCleanChats),
 	)
 	exportGrid := container.NewGridWithColumns(2, leftExportColumn, rightExportColumn)
 
@@ -362,7 +363,7 @@ func main() {
 		widget.NewSeparator(),
 		btnStart,
 		widget.NewSeparator(),
-		widget.NewLabelWithStyle("Daten bereinigen:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle(text.cleanDataLabel, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		exportGrid,
 		widget.NewSeparator(),
 		progressBar,

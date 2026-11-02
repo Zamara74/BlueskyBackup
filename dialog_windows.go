@@ -20,11 +20,11 @@ func getCurrentDir() string {
 }
 
 // Nativer SaveFileDialog mit anpassbarem Filter und Dateinamen
-func openNativeSaveDialog(defaultFilename, filter string) (string, bool) {
+func openNativeSaveDialog(defaultFilename, filter, allFilesFilter, title string) (string, bool) {
 	absDir := getCurrentDir()
 
 	if filter == "" {
-		filter = "Alle Dateien (*.*)|*.*"
+		filter = allFilesFilter
 	}
 
 	psScript := fmt.Sprintf(`
@@ -33,46 +33,46 @@ $dialog = New-Object System.Windows.Forms.SaveFileDialog
 $dialog.InitialDirectory = '%s'
 $dialog.FileName = '%s'
 $dialog.Filter = '%s'
-$dialog.Title = 'Datei speichern unter'
+$dialog.Title = '%s'
 if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
     Write-Output $dialog.FileName
 }
-`, strings.ReplaceAll(absDir, "'", "''"), strings.ReplaceAll(defaultFilename, "'", "''"), strings.ReplaceAll(filter, "'", "''"))
+`, strings.ReplaceAll(absDir, "'", "''"), strings.ReplaceAll(defaultFilename, "'", "''"), strings.ReplaceAll(filter, "'", "''"), strings.ReplaceAll(title, "'", "''"))
 
 	return executePowerShellDialog(psScript)
 }
 
 // Nativer OpenFileDialog (.car-Datei auswählen)
-func openNativeOpenFileDialog() (string, bool) {
+func openNativeOpenFileDialog(filter, title string) (string, bool) {
 	absDir := getCurrentDir()
 
 	psScript := fmt.Sprintf(`
 Add-Type -AssemblyName System.Windows.Forms
 $dialog = New-Object System.Windows.Forms.OpenFileDialog
 $dialog.InitialDirectory = '%s'
-$dialog.Filter = 'CAR-Dateien (*.car)|*.car|Alle Dateien (*.*)|*.*'
-$dialog.Title = '.car-Datei auswählen'
+$dialog.Filter = '%s'
+$dialog.Title = '%s'
 if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
     Write-Output $dialog.FileName
 }
-`, strings.ReplaceAll(absDir, "'", "''"))
+`, strings.ReplaceAll(absDir, "'", "''"), strings.ReplaceAll(filter, "'", "''"), strings.ReplaceAll(title, "'", "''"))
 
 	return executePowerShellDialog(psScript)
 }
 
 // Nativer FolderBrowserDialog (Zielordner auswählen)
-func openNativeFolderDialog() (string, bool) {
+func openNativeFolderDialog(description string) (string, bool) {
 	absDir := getCurrentDir()
 
 	psScript := fmt.Sprintf(`
 Add-Type -AssemblyName System.Windows.Forms
 $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
 $dialog.SelectedPath = '%s'
-$dialog.Description = 'Zielordner für den Export auswählen'
+$dialog.Description = '%s'
 if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
     Write-Output $dialog.SelectedPath
 }
-`, strings.ReplaceAll(absDir, "'", "''"))
+`, strings.ReplaceAll(absDir, "'", "''"), strings.ReplaceAll(description, "'", "''"))
 
 	return executePowerShellDialog(psScript)
 }

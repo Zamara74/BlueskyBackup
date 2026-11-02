@@ -7,6 +7,7 @@ require (
 	github.com/bluesky-social/indigo v0.0.0-20250123072624-9e3b84fdbb20
 	github.com/ipld/go-car/v2 v2.13.1
 	github.com/ipld/go-ipld-prime v0.21.0
+	github.com/jeandeaual/go-locale v0.0.0-20250612000132-0ef82f21eade
 )
 
 require (
@@ -50,7 +51,6 @@ require (
 	github.com/ipfs/go-log/v2 v2.5.1 // indirect
 	github.com/ipfs/go-metrics-interface v0.0.1 // indirect
 	github.com/jbenet/goprocess v0.1.4 // indirect
-	github.com/jeandeaual/go-locale v0.0.0-20250612000132-0ef82f21eade // indirect
 	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

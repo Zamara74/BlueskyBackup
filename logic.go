@@ -82,7 +82,7 @@ func nodeToInterface(n interface{}) interface{} {
 	}
 }
 
-func parseCarFile(carPath string, baseOutputDir string, logFunc func(string)) error {
+func parseCarFile(carPath string, baseOutputDir string, text uiText, logFunc func(string)) error {
 	outputDir := filepath.Join(baseOutputDir, "output")
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return err
@@ -102,7 +102,7 @@ func parseCarFile(carPath string, baseOutputDir string, logFunc func(string)) er
 	recordsByType := make(map[string][]OutputRecord)
 	seenCids := make(map[string]bool)
 
-	logFunc("Lese CAR-Blöcke ein...")
+	logFunc(text.readingCARBlocks)
 
 	for {
 		block, err := reader.Next()
@@ -173,13 +173,13 @@ func parseCarFile(carPath string, baseOutputDir string, logFunc func(string)) er
 		}
 
 		_ = os.WriteFile(filePath, jsonBytes, 0644)
-		logFunc(fmt.Sprintf("Exportiert: output_%s.json (%d Einträge)", safeTypeName, len(records)))
+		logFunc(fmt.Sprintf(text.exportedRecords, safeTypeName, len(records)))
 	}
 
 	return nil
 }
 
-func downloadMedia(baseOutputDir, userDid, pdsHost string, progressFunc func(current, total int, msg string)) error {
+func downloadMedia(baseOutputDir, userDid, pdsHost string, text uiText, progressFunc func(current, total int, msg string)) error {
 	postFile := filepath.Join(baseOutputDir, "output", "output_app_bsky_feed_post.json")
 	medienOrdner := filepath.Join(baseOutputDir, "Medien")
 	_ = os.MkdirAll(medienOrdner, 0755)
@@ -234,11 +234,11 @@ func downloadMedia(baseOutputDir, userDid, pdsHost string, progressFunc func(cur
 
 	total := len(tasks)
 	if total == 0 {
-		progressFunc(0, 0, "Keine Bilder zum Herunterladen gefunden.")
+		progressFunc(0, 0, text.noImagesFound)
 		return nil
 	}
 
-	progressFunc(0, total, fmt.Sprintf("Starte Download von %d Bildern...", total))
+	progressFunc(0, total, fmt.Sprintf(text.startingImageDownload, total))
 
 	var wg sync.WaitGroup
 	guard := make(chan struct{}, 8)
@@ -251,7 +251,7 @@ func downloadMedia(baseOutputDir, userDid, pdsHost string, progressFunc func(cur
 		if _, err := os.Stat(task.Path); err == nil {
 			mu.Lock()
 			completed++
-			progressFunc(completed, total, fmt.Sprintf("Bereits vorhanden: %s", filepath.Base(task.Path)))
+			progressFunc(completed, total, fmt.Sprintf(text.imageAlreadyExists, filepath.Base(task.Path)))
 			mu.Unlock()
 			continue
 		}
@@ -275,7 +275,7 @@ func downloadMedia(baseOutputDir, userDid, pdsHost string, progressFunc func(cur
 
 			mu.Lock()
 			completed++
-			progressFunc(completed, total, fmt.Sprintf("Geladen: %s", filepath.Base(t.Path)))
+			progressFunc(completed, total, fmt.Sprintf(text.imageDownloaded, filepath.Base(t.Path)))
 			mu.Unlock()
 		}(task)
 	}
@@ -326,7 +326,7 @@ func exportPostsAsCleanText(baseOutputDir, targetFilePath string) error {
 		sb.WriteString(fmt.Sprintf("[%d] %s\n", postNum, formattedDate))
 		sb.WriteString(strings.Repeat("-", 40) + "\n")
 		sb.WriteString(text + "\n")
-		
+
 		// --- Bildreferenzen mit Datums-Dateinamen auslesen ---
 		if embed, ok := recordData["embed"].(map[string]interface{}); ok {
 			var images []interface{}
@@ -365,6 +365,7 @@ func exportPostsAsCleanText(baseOutputDir, targetFilePath string) error {
 
 	return os.WriteFile(targetFilePath, []byte(sb.String()), 0644)
 }
+
 // Export: Follows mit Handle-Auflösung
 func exportFollowsAsCleanText(baseOutputDir, targetFilePath string) error {
 	file := filepath.Join(baseOutputDir, "output", "output_app_bsky_graph_follow.json")
@@ -505,6 +506,7 @@ func resolveHandleToDID(handle, pdsHost string) (string, error) {
 
 	return result.Did, nil
 }
+
 // Cache, damit gleiche DIDs nicht mehrfach online abgefragt werden
 var didHandleCache = make(map[string]string)
 
@@ -548,6 +550,7 @@ func resolveDIDToHandle(did, pdsHost string) string {
 	didHandleCache[cleanDID] = formattedHandle
 	return formattedHandle
 }
+
 // Export 1b: Posts als HTML-Dokument mit anklickbaren Bild-Links
 func exportPostsAsHTML(baseOutputDir, targetFilePath string, hasDownloadedMedia bool) error {
 	postFile := filepath.Join(baseOutputDir, "output", "output_app_bsky_feed_post.json")
@@ -631,18 +634,18 @@ func exportPostsAsHTML(baseOutputDir, targetFilePath string, hasDownloadedMedia 
 				}
 
 				for imgIndex := range images {
-    // Geändert von .jpeg auf .jpg
-    imgFilename := fmt.Sprintf("%s_%d.jpg", datePrefix, imgIndex+1)
-    relPath := fmt.Sprintf("Medien/%s", imgFilename)
+					// Geändert von .jpeg auf .jpg
+					imgFilename := fmt.Sprintf("%s_%d.jpg", datePrefix, imgIndex+1)
+					relPath := fmt.Sprintf("Medien/%s", imgFilename)
 
-    if hasDownloadedMedia && mediaFolderExists {
-        // Anklickbarer Link zur lokalen Datei
-        sb.WriteString(fmt.Sprintf("    &bull; <a class=\"media-link\" href=\"%s\" target=\"_blank\">Bild öffnen: %s</a><br>\n", relPath, imgFilename))
-    } else {
-        // Nur Text-Hinweis ohne Hyperlink
-        sb.WriteString(fmt.Sprintf("    &bull; [Bild: %s] <em>(nicht heruntergeladen)</em><br>\n", imgFilename))
-    }
-}
+					if hasDownloadedMedia && mediaFolderExists {
+						// Anklickbarer Link zur lokalen Datei
+						sb.WriteString(fmt.Sprintf("    &bull; <a class=\"media-link\" href=\"%s\" target=\"_blank\">Bild öffnen: %s</a><br>\n", relPath, imgFilename))
+					} else {
+						// Nur Text-Hinweis ohne Hyperlink
+						sb.WriteString(fmt.Sprintf("    &bull; [Bild: %s] <em>(nicht heruntergeladen)</em><br>\n", imgFilename))
+					}
+				}
 				sb.WriteString("  </div>\n")
 			}
 		}
@@ -654,6 +657,7 @@ func exportPostsAsHTML(baseOutputDir, targetFilePath string, hasDownloadedMedia 
 
 	return os.WriteFile(targetFilePath, []byte(sb.String()), 0644)
 }
+
 // Formatiert einen ISO-Timestamp (z.B. 2026-10-28T19:35:24.022Z) in deutsches Format
 func formatGermanDateTime(isoString string) string {
 	// ISO-8601 Strings parsen (UTC)
