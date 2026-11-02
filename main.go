@@ -22,7 +22,7 @@ func main() {
 	myApp.SetIcon(fyne.NewStaticResource("icon.png", appIcon))
 	myWindow := myApp.NewWindow(text.windowTitle)
 	myWindow.Resize(fyne.NewSize(680, 620))
-	creditsLabel := widget.NewLabelWithStyle("v1.1.0 by Zamara74", fyne.TextAlignTrailing, fyne.TextStyle{Italic: true})
+	creditsLabel := widget.NewLabelWithStyle("v1.2.0 by Zamara74", fyne.TextAlignTrailing, fyne.TextStyle{Italic: true})
 
 	carPathEntry := widget.NewEntry()
 	carPathEntry.SetPlaceHolder(text.carPathPlaceholder)
